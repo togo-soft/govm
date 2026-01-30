@@ -1,21 +1,14 @@
 package main
 
 import (
-	"log/slog"
-	"os"
-
+	"codefloe.com/apps/govm/logger"
 	"github.com/spf13/cobra"
-	"gitter.top/apps/govm/logger"
 )
 
 var log *logger.Logger
 
 func init() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		slog.Error("getting user home directory failed", "reason", err)
-		homeDir = "."
-	}
+	homeDir := WorkspaceDir()
 	logName := "govm.log"
 	log = logger.NewLogger(homeDir, logName)
 }
@@ -40,6 +33,8 @@ func (m *Command) rootCommand() {
 func (m *Command) load() {
 	m.rootCommand()
 	m.listCommand()
+	m.useCommand()
+	m.removeCommand()
 }
 
 func (m *Command) Execute() error {

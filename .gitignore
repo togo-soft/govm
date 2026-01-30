@@ -1,2 +1,6 @@
 .idea
 .claude
+go.sum
+CLAUDE.md
+govm.exe
+govm

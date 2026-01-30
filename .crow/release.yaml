@@ -1,0 +1,177 @@
+when:
+  - event: tag
+
+clone:
+  git:
+    image: codeberg.org/crow-plugins/clone:1.0.3
+    settings:
+      tags: true
+
+steps:
+  build-linux-amd64:
+    image: golang:1.24
+    environment:
+      GOOS: linux
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-linux-amd64 ./cmd
+      - sha256sum build/govm-linux-amd64 > build/govm-linux-amd64.sha256
+
+  build-linux-arm64:
+    image: golang:1.24
+    environment:
+      GOOS: linux
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-linux-arm64 ./cmd
+      - sha256sum build/govm-linux-arm64 > build/govm-linux-arm64.sha256
+
+  build-windows-amd64:
+    image: golang:1.24
+    environment:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-windows-amd64.exe ./cmd
+      - sha256sum build/govm-windows-amd64.exe > build/govm-windows-amd64.exe.sha256
+
+  build-windows-arm64:
+    image: golang:1.24
+    environment:
+      GOOS: windows
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-windows-arm64.exe ./cmd
+      - sha256sum build/govm-windows-arm64.exe > build/govm-windows-arm64.exe.sha256
+
+  build-macos-amd64:
+    image: golang:1.24
+    environment:
+      GOOS: darwin
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-macos-amd64 ./cmd
+      - sha256sum build/govm-macos-amd64 > build/govm-macos-amd64.sha256
+
+  build-macos-arm64:
+    image: golang:1.24
+    environment:
+      GOOS: darwin
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    commands:
+      - mkdir -p build
+      - go build -o build/govm-macos-arm64 ./cmd
+      - sha256sum build/govm-macos-arm64 > build/govm-macos-arm64.sha256
+
+  prepare-release:
+    image: golang:1.24
+    depends_on:
+      - build-linux-amd64
+      - build-linux-arm64
+      - build-windows-amd64
+      - build-windows-arm64
+      - build-macos-amd64
+      - build-macos-arm64
+    commands:
+      - mkdir -p release
+      - cp build/* release/
+      - cd release && cat *.sha256 > SHA256SUMS && cd ..
+      - ls -lh release/
+      - pwd
+
+  create-release-notes:
+    image: golang:1.24
+    depends_on:
+      - prepare-release
+    commands:
+      - |
+        cat > release/RELEASE_NOTES.md << 'EOF'
+        # GOVM Release ${CI_COMMIT_TAG}
+
+        ## Downloads
+
+        ### Linux
+        - **govm-linux-amd64**: Linux x86_64 binary
+        - **govm-linux-arm64**: Linux ARM64 binary
+
+        ### Windows
+        - **govm-windows-amd64.exe**: Windows x86_64 executable
+        - **govm-windows-arm64.exe**: Windows ARM64 executable
+
+        ### macOS
+        - **govm-macos-amd64**: macOS Intel (x86_64) binary
+        - **govm-macos-arm64**: macOS Apple Silicon (ARM64) binary
+
+        ## Installation
+
+        Download the appropriate binary for your platform:
+
+        ```bash
+        # Linux x86_64
+        curl -L -o govm https://codefloe.com/${CI_REPO}/releases/download/${CI_COMMIT_TAG}/govm-linux-amd64
+        chmod +x govm
+        sudo mv govm /usr/local/bin/
+        ```
+
+        ## Verification
+
+        All binaries include SHA256 checksums:
+
+        ```bash
+        sha256sum -c SHA256SUMS
+        ```
+
+        ## Release Information
+        - Tag: ${CI_COMMIT_TAG}
+        - Commit: ${CI_COMMIT_SHA}
+        EOF
+
+  create-release:
+    image: codefloe.com/actions/release:v1.0.1
+    depends_on:
+      - prepare-release
+    settings:
+      endpoint: https://codefloe.com
+      access_key:
+        from_secret: CODEFLOE_TOKEN
+      owner: ${CI_REPO_OWNER}
+      repo: ${CI_REPO_NAME}
+      tag_name: ${CI_COMMIT_TAG}
+      write_mode: append
+      release_note: release/RELEASE_NOTES.md
+      attachments:
+        - release/govm.*
+
+  notify-success:
+    image: golang:1.24
+    depends_on:
+      - create-release
+    commands:
+      - |
+        echo "=========================================="
+        echo "Release build completed successfully!"
+        echo "=========================================="
+        echo "Tag: ${CI_COMMIT_TAG}"
+        echo "Commit: ${CI_COMMIT_SHA}"
+        echo ""
+        echo "Built platforms:"
+        echo "  ✓ Linux amd64"
+        echo "  ✓ Linux arm64"
+        echo "  ✓ Windows amd64"
+        echo "  ✓ Windows arm64"
+        echo "  ✓ macOS amd64"
+        echo "  ✓ macOS arm64"
+        echo ""
+        echo "Release page: https://codefloe.com/${CI_REPO}/releases/tag/${CI_COMMIT_TAG}"
+        echo "=========================================="
