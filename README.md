@@ -206,68 +206,6 @@ After download completion, SHA256 verification is performed:
 - **Disk Space**: ~200-300 MB per Go version
 - **Memory**: Minimal (< 50 MB for govm itself)
 
-## Commands Reference
-
-### list
-
-List available Go versions.
-
-```bash
-govm list [flags]
-```
-
-**Flags:**
-- `-s, --stable`: Show only stable versions
-
-**Examples:**
-```bash
-govm list
-govm list --stable
-govm list -s
-```
-
-### use
-
-Install/switch to a specific Go version.
-
-```bash
-govm use [version] [flags]
-```
-
-**Arguments:**
-- `version`: Go version to install (e.g., 1.25.6)
-
-**Flags:**
-- `-v, --version string`: Go version (alternative to positional argument)
-- `-s, --site string`: Download site (default: https://go.dev/dl)
-
-**Examples:**
-```bash
-govm use 1.25.6
-govm use 1.25.6 -s https://golang.google.cn/dl/
-govm use -v 1.24.11
-```
-
-### remove
-
-Remove an installed Go version.
-
-```bash
-govm remove [version] [flags]
-```
-
-**Arguments:**
-- `version`: Go version to remove (e.g., 1.25.6)
-
-**Flags:**
-- `-v, --version string`: Go version (alternative to positional argument)
-
-**Examples:**
-```bash
-govm remove 1.25.6
-govm remove -v 1.24.11
-```
-
 ## Troubleshooting
 
 ### Issue: Command not found
@@ -322,25 +260,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Changelog
-
-### v0.0.1 (Current)
-
-Initial release with core features:
-- `list` command: View available Go versions
-- `use` command: Install and switch Go versions
-- `remove` command: Remove installed versions
-- Download progress bar
-- SHA256 verification
-- Multi-version support
-
-## Related Projects
-
-- [asdf](https://asdf-vm.com/) - Multi-language version manager
-- [gvm](https://github.com/moovweb/gvm) - Go Version Manager
-- [nvm](https://github.com/nvm-sh/nvm) - Node Version Manager
+This project is licensed under the Apache License 2.0 License - see the LICENSE file for details.
 
 ## FAQ
 

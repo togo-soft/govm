@@ -206,68 +206,6 @@ Version removed
 - **磁盘空间**：每个 Go 版本约 200-300 MB
 - **内存**：最小（govm 本身 < 50 MB）
 
-## 命令参考
-
-### list
-
-列出可用的 Go 版本。
-
-```bash
-govm list [flags]
-```
-
-**Flags：**
-- `-s, --stable`：仅显示稳定版本
-
-**示例：**
-```bash
-govm list
-govm list --stable
-govm list -s
-```
-
-### use
-
-安装或切换到指定的 Go 版本。
-
-```bash
-govm use [version] [flags]
-```
-
-**参数：**
-- `version`：要安装的 Go 版本（例如 1.25.6）
-
-**Flags：**
-- `-v, --version string`：Go 版本（位置参数的替代方式）
-- `-s, --site string`：下载站点（默认：https://go.dev/dl）
-
-**示例：**
-```bash
-govm use 1.25.6
-govm use 1.25.6 -s https://golang.google.cn/dl/
-govm use -v 1.24.11
-```
-
-### remove
-
-删除已安装的 Go 版本。
-
-```bash
-govm remove [version] [flags]
-```
-
-**参数：**
-- `version`：要删除的 Go 版本（例如 1.25.6）
-
-**Flags：**
-- `-v, --version string`：Go 版本（位置参数的替代方式）
-
-**示例：**
-```bash
-govm remove 1.25.6
-govm remove -v 1.24.11
-```
-
 ## 故障排除
 
 ### 问题：命令未找到
@@ -322,25 +260,7 @@ echo $PATH
 
 ## 许可证
 
-该项目采用 MIT 许可证 - 详见 LICENSE 文件。
-
-## 更新日志
-
-### v0.0.1 （当前版本）
-
-初始版本，包含核心功能：
-- `list` 命令：查看可用的 Go 版本
-- `use` 命令：安装和切换 Go 版本
-- `remove` 命令：删除已安装的版本
-- 下载进度条
-- SHA256 校验
-- 多版本支持
-
-## 相关项目
-
-- [asdf](https://asdf-vm.com/) - 多语言版本管理器
-- [gvm](https://github.com/moovweb/gvm) - Go 版本管理器
-- [nvm](https://github.com/nvm-sh/nvm) - Node 版本管理器
+该项目采用 Apache License 2.0 许可证 - 详见 LICENSE 文件。
 
 ## 常见问题
 
