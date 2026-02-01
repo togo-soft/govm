@@ -437,24 +437,34 @@ func (pr *progressReader) Read(p []byte) (n int, err error) {
 	n, err = pr.reader.Read(p)
 	pr.current += int64(n)
 
-	// Calculate progress
-	percent := float64(pr.current) / float64(pr.total) * 100
-	barWidth := 30
-	filledWidth := int(percent / 100 * float64(barWidth))
-	if filledWidth > barWidth {
-		filledWidth = barWidth
+	// Check if total size is known
+	if pr.total <= 0 {
+		// No Content-Length header, show downloaded size only
+		currentMB := float64(pr.current) / (1024 * 1024)
+		fmt.Printf("\r[===>] Downloaded: %.1f MB", currentMB)
+	} else {
+		// Calculate progress
+		percent := float64(pr.current) / float64(pr.total) * 100
+		barWidth := 30
+		filledWidth := int(percent / 100 * float64(barWidth))
+		if filledWidth > barWidth {
+			filledWidth = barWidth
+		}
+		if filledWidth < 0 {
+			filledWidth = 0
+		}
+
+		// Create progress bar
+		bar := strings.Repeat("=", filledWidth) + strings.Repeat(" ", barWidth-filledWidth)
+
+		// Format file size
+		totalMB := float64(pr.total) / (1024 * 1024)
+		currentMB := float64(pr.current) / (1024 * 1024)
+
+		// Print progress (using \r to overwrite the same line)
+		fmt.Printf("\r[%s] %.1f MB / %.1f MB (%.1f%%)",
+			bar, currentMB, totalMB, percent)
 	}
-
-	// Create progress bar
-	bar := strings.Repeat("=", filledWidth) + strings.Repeat(" ", barWidth-filledWidth)
-
-	// Format file size
-	totalMB := float64(pr.total) / (1024 * 1024)
-	currentMB := float64(pr.current) / (1024 * 1024)
-
-	// Print progress (using \r to overwrite the same line)
-	fmt.Printf("\r[%s] %.1f MB / %.1f MB (%.1f%%)",
-		bar, currentMB, totalMB, percent)
 
 	if err == io.EOF {
 		fmt.Println() // New line when done

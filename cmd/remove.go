@@ -27,6 +27,26 @@ func (m *Command) removeCommand() {
 			if vm.LocalData.IsInstalled(version) {
 				return nil
 			}
+
+			// Clean up residual files for this version if not installed
+			workspaceDir := WorkspaceDir()
+
+			// Clean up version directory from versions
+			versionsDir := filepath.Join(workspaceDir, "versions")
+			versionDir := filepath.Join(versionsDir, version)
+			if err := os.RemoveAll(versionDir); err != nil {
+				log.Error("failed to clean version directory", "version", version, "reason", err)
+			} else {
+				log.Info("cleaned version directory", "version", version)
+			}
+
+			// Clean up downloaded files related to this version
+			versionFiles := filepath.Join(workspaceDir, "downloads", "go"+version+".*")
+			err := removeFiles(versionFiles)
+			if err != nil {
+				log.Error("failed to clean download files", "version", version, "reason", err)
+			}
+
 			return errors.New("version not installed")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
