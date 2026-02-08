@@ -75,7 +75,7 @@ steps:
       - sha256sum build/govm-macos-arm64 > build/govm-macos-arm64.sha256
 
   prepare-release:
-    image: golang:1.24
+    image: fedora:latest
     depends_on:
       - build-linux-amd64
       - build-linux-arm64
@@ -91,7 +91,7 @@ steps:
       - pwd
 
   create-release-notes:
-    image: golang:1.24
+    image: fedora:latest
     depends_on:
       - prepare-release
     commands:
@@ -138,40 +138,14 @@ steps:
         EOF
 
   create-release:
-    image: codefloe.com/actions/release:v1.0.4
+    image: codefloe.com/actions/release:v1.0.5
     depends_on:
       - prepare-release
     settings:
       endpoint: https://codefloe.com
       access_token:
         from_secret: CODEFLOE_TOKEN
-      owner: ${CI_REPO_OWNER}
-      repo: ${CI_REPO_NAME}
-      tag_name: ${CI_COMMIT_TAG}
       write_mode: append
       release_note: release/RELEASE_NOTES.md
       attachments:
         - release/govm.*
-
-  notify-success:
-    image: golang:1.24
-    depends_on:
-      - create-release
-    commands:
-      - |
-        echo "=========================================="
-        echo "Release build completed successfully!"
-        echo "=========================================="
-        echo "Tag: ${CI_COMMIT_TAG}"
-        echo "Commit: ${CI_COMMIT_SHA}"
-        echo ""
-        echo "Built platforms:"
-        echo "  ✓ Linux amd64"
-        echo "  ✓ Linux arm64"
-        echo "  ✓ Windows amd64"
-        echo "  ✓ Windows arm64"
-        echo "  ✓ macOS amd64"
-        echo "  ✓ macOS arm64"
-        echo ""
-        echo "Release page: https://codefloe.com/${CI_REPO}/releases/tag/${CI_COMMIT_TAG}"
-        echo "=========================================="
