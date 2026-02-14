@@ -14,7 +14,7 @@
 - **实时进度条**：下载时显示进度条
 - **校验和验证**：自动 SHA256 校验，详细的反馈信息
 - **纯 Go 编写**：无 shell 脚本，完全用 Go 实现
-- **简化配置**：只需设置一个环境变量 `GOROOT=~/.govm/current`
+- **简化配置**：只需设置一个环境变量 `GOROOT=~/.govm/go`
 
 ## 安装
 
@@ -78,7 +78,7 @@ govm remove -v 1.25.6
 在 shell 配置文件中添加（`~/.bashrc`、`~/.zshrc` 等）：
 
 ```bash
-export GOROOT=~/.govm/current
+export GOROOT=~/.govm/go/
 export PATH=$GOROOT/bin:$PATH
 ```
 
@@ -98,7 +98,7 @@ go version
 
 ```
 ~/.govm/
-├── current/              # 当前活跃的 Go 版本
+├── go/              # 当前活跃的 Go 版本
 │   ├── bin/
 │   ├── lib/
 │   ├── src/
@@ -112,7 +112,8 @@ go version
 │   ├── go1.24.11.zip
 │   └── ...
 ├── local.json            # 配置文件
-└── versions.json         # 远程版本列表缓存
+├── versions.json         # 远程版本列表缓存
+└── govm.log              # 日志文件
 ```
 
 ## 使用示例
@@ -121,51 +122,50 @@ go version
 
 ```bash
 $ govm use 1.25.6
-[============================] 150.0 MB / 150.0 MB (100.0%)
-✓ SHA256 verification passed: go1.25.6.tar.gz
-Version installed and set as current
+✓ downloading [file]="go1.25.6.linux-amd64.tar.gz"
+[==============================] 150.0 MB / 150.0 MB (100.0%)
+✓ SHA256 verification passed: go1.25.6.linux-amd64.tar.gz
+✓ version installed and set as current [version]="1.25.6"
 
 $ govm use 1.24.11
-[============================] 145.0 MB / 145.0 MB (100.0%)
-✓ SHA256 verification passed: go1.24.11.zip
-Version installed and set as current
+✓ downloading [file]="go1.24.11.linux-amd64.tar.gz"
+[==============================] 145.0 MB / 145.0 MB (100.0%)
+✓ SHA256 verification passed: go1.24.11.linux-amd64.tar.gz
+✓ version installed and set as current [version]="1.24.11"
 ```
 
 ### 查看已安装版本
 
 ```bash
 $ govm list
-1.23.0          （绿色 - 已安装）
-1.24.11         （绿色 - 已安装）
-1.25.6          （绿色 - 已安装）
+1.23.0          # 绿色 = 已安装
+1.24.11         # 绿色 = 已安装
+1.25.6          # 绿色 = 已安装
 ...
 ```
 
 ### 快速版本切换
 
 ```bash
-# 切换到已安装的 1.24.11
+# 切换到已安装的 1.24.11（已缓存，跳过下载）
 $ govm use 1.24.11
-Version installed and set as current
-
-# 切换回 1.25.6
-$ govm use 1.25.6
-Version installed and set as current
+✓ file found in downloads, skipping download [file]="go1.24.11.linux-amd64.tar.gz"
+✓ version installed and set as current [version]="1.24.11"
 ```
-
-版本切换是瞬间完成的，因为版本已经存储在 `versions/` 目录中。
 
 ### 删除版本
 
 ```bash
 $ govm remove 1.23.0
-Version removed
+✓ removed version directory [version]="1.23.0"
+✓ removed file from downloads [file]="go1.23.0.linux-amd64.tar.gz"
+✓ version removed [version]="1.23.0"
 ```
 
 这会删除：
 - `versions/1.23.0/` 目录
 - `downloads/` 中的下载文件
-- 如果是当前版本，清空 `current/` 目录
+- 如果是当前版本，清空 `go/` 目录
 
 ## 工作原理
 
@@ -175,29 +175,15 @@ Version removed
 2. 如果不存在，从指定的镜像下载
 3. 验证 SHA256 校验和
 4. 解压到 `versions/1.25.6/`
-5. 复制到 `current/`
+5. 复制到 `go/`
 6. 更新 `local.json`
 
 ### 后续使用 (govm use 1.25.6)
 
 1. 文件已在 `downloads/` 中，跳过下载
-2. 版本已在 `versions/1.25.6/` 中，跳过解压
-3. 从 `versions/1.25.6/` 复制到 `current/`
+2. 解压到 `versions/1.25.6/`
+3. 从 `versions/1.25.6/` 复制到 `go/`
 4. 更新 `local.json`
-
-### 下载和安装
-
-下载时显示实时进度条：
-
-```
-[============================] 120.5 MB / 150.0 MB (80.3%)
-```
-
-下载完成后进行 SHA256 校验：
-
-```
-✓ SHA256 verification passed: go1.25.6.tar.gz
-```
 
 ## 系统要求
 
@@ -205,6 +191,28 @@ Version removed
 - **架构**：x86_64、arm64（取决于 Go 的可用性）
 - **磁盘空间**：每个 Go 版本约 200-300 MB
 - **内存**：最小（govm 本身 < 50 MB）
+
+## 项目结构
+
+```
+govm/
+├── cmd/                        # CLI 入口和命令定义
+│   ├── main.go                 # 入口文件，根命令
+│   ├── list.go                 # list 命令
+│   ├── use.go                  # use 命令
+│   └── remove.go               # remove 命令
+├── govm/                       # 核心业务逻辑
+│   ├── types.go                # Version、VersionFile、LocalData 类型定义
+│   ├── manager.go              # Manager：Init、Install、Uninstall、Sync
+│   └── storage.go              # 本地文件读写（JSON 序列化）
+├── internal/
+│   ├── archive/                # 归档解压（tar.gz、zip）
+│   ├── download/               # 文件下载（带进度条）、SHA256 校验
+│   └── fsutil/                 # 文件系统工具（CopyDir、HomeDir 等）
+├── logger/                     # 结构化日志（控制台 + 文件）
+├── go.mod
+└── go.sum
+```
 
 ## 故障排除
 
@@ -234,39 +242,17 @@ govm use 1.25.6 -s https://golang.google.cn/dl/
 **解决方案**：验证 shell 配置文件：
 ```bash
 echo $GOROOT
-# 应输出：/path/to/home/.govm/current
+# 应输出：/home/<user>/.govm/go
 
 echo $PATH
-# 应包含：/path/to/home/.govm/current/bin
+# 应包含：/home/<user>/.govm/go/bin
 ```
-
-## 架构
-
-- **纯 Go 编写**：无 C 依赖或 shell 脚本
-- **单个二进制**：所有功能包含在一个可执行文件中
-- **最小依赖**：仅使用 Go 标准库和 Cobra CLI 框架
-
-### 核心组件
-
-- **VersionManager**：管理版本信息和安装
-- **downloadFile()**：带进度追踪的下载
-- **verifySha256()**：校验和验证
-- **extractArchive()**：解压 tar.gz 和 zip 文件
-- **copyDir()**：递归复制版本目录
-
-## 贡献
-
-欢迎贡献！请随时提交 Pull Request。
-
-## 许可证
-
-该项目采用 Apache License 2.0 许可证 - 详见 LICENSE 文件。
 
 ## 常见问题
 
 **Q：我能同时使用多个 Go 版本吗？**
 
-A：可以！每个版本都安装在 `~/.govm/versions/{version}/` 中。`current/` 目录指向当前活跃的版本。
+A：可以！每个版本都安装在 `~/.govm/versions/{version}/` 中。`go/` 目录存放当前活跃版本的副本。
 
 **Q：govm 会与我的系统 Go 安装冲突吗？**
 
@@ -280,9 +266,17 @@ A：每个 Go 版本约 150-200 MB。计划每个版本约 260 MB（包括缓存
 
 A：可以！govm 是跨平台的，支持 Windows、Linux 和 macOS。
 
-**Q：我如何卸载 govm？**
+**Q：如何卸载 govm？**
 
 A：只需删除 `~/.govm/` 目录，并从 PATH 中移除 govm 二进制文件。
+
+## 贡献
+
+欢迎贡献！请随时提交 Pull Request。
+
+## 许可证
+
+该项目采用 Apache License 2.0 许可证 - 详见 LICENSE 文件。
 
 ## 支持
 

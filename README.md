@@ -14,7 +14,7 @@ A lightweight, cross-platform Go version manager written in pure Go. Easily inst
 - **Real-time Progress**: Visual progress bar during downloads
 - **Checksum Verification**: Automatic SHA256 verification with detailed feedback
 - **Pure Go**: No shell scripts, fully written in Go
-- **Easy Configuration**: Single environment variable `GOROOT=~/.govm/current`
+- **Easy Configuration**: Single environment variable `GOROOT=~/.govm/go`
 
 ## Installation
 
@@ -78,7 +78,7 @@ govm remove -v 1.25.6
 Add the following to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
 
 ```bash
-export GOROOT=~/.govm/current
+export GOROOT=~/.govm/go/
 export PATH=$GOROOT/bin:$PATH
 ```
 
@@ -98,7 +98,7 @@ go version
 
 ```
 ~/.govm/
-├── current/              # Current active Go version
+├── go/              # Current active Go version
 │   ├── bin/
 │   ├── lib/
 │   ├── src/
@@ -112,7 +112,8 @@ go version
 │   ├── go1.24.11.zip
 │   └── ...
 ├── local.json            # Configuration file
-└── versions.json         # Remote version list cache
+├── versions.json         # Remote version list cache
+└── govm.log              # Log file
 ```
 
 ## Usage Examples
@@ -121,51 +122,50 @@ go version
 
 ```bash
 $ govm use 1.25.6
-[============================] 150.0 MB / 150.0 MB (100.0%)
-✓ SHA256 verification passed: go1.25.6.tar.gz
-Version installed and set as current
+✓ downloading [file]="go1.25.6.linux-amd64.tar.gz"
+[==============================] 150.0 MB / 150.0 MB (100.0%)
+✓ SHA256 verification passed: go1.25.6.linux-amd64.tar.gz
+✓ version installed and set as current [version]="1.25.6"
 
 $ govm use 1.24.11
-[============================] 145.0 MB / 145.0 MB (100.0%)
-✓ SHA256 verification passed: go1.24.11.zip
-Version installed and set as current
+✓ downloading [file]="go1.24.11.linux-amd64.tar.gz"
+[==============================] 145.0 MB / 145.0 MB (100.0%)
+✓ SHA256 verification passed: go1.24.11.linux-amd64.tar.gz
+✓ version installed and set as current [version]="1.24.11"
 ```
 
 ### View Installed Versions
 
 ```bash
 $ govm list
-1.23.0          (green - installed)
-1.24.11         (green - installed)
-1.25.6          (green - installed)
+1.23.0          # green = installed
+1.24.11         # green = installed
+1.25.6          # green = installed
 ...
 ```
 
 ### Quick Version Switching
 
 ```bash
-# Switch to version 1.24.11 (already installed)
+# Switch to version 1.24.11 (already installed, skips download)
 $ govm use 1.24.11
-Version installed and set as current
-
-# Switch back to 1.25.6
-$ govm use 1.25.6
-Version installed and set as current
+✓ file found in downloads, skipping download [file]="go1.24.11.linux-amd64.tar.gz"
+✓ version installed and set as current [version]="1.24.11"
 ```
-
-The switch is instant since the version is already installed in the `versions/` directory.
 
 ### Remove a Version
 
 ```bash
 $ govm remove 1.23.0
-Version removed
+✓ removed version directory [version]="1.23.0"
+✓ removed file from downloads [file]="go1.23.0.linux-amd64.tar.gz"
+✓ version removed [version]="1.23.0"
 ```
 
 This removes:
 - The version from `versions/1.23.0/`
 - The downloaded file from `downloads/`
-- Clears `current/` if it was the active version
+- Clears `go/` if it was the active version
 
 ## How It Works
 
@@ -175,29 +175,15 @@ This removes:
 2. If not, download from the specified mirror
 3. Verify SHA256 checksum
 4. Extract to `versions/1.25.6/`
-5. Copy to `current/`
+5. Copy to `go/`
 6. Update `local.json`
 
 ### Subsequent Use (govm use 1.25.6)
 
 1. File already in `downloads/`, skip download
-2. Version already in `versions/1.25.6/`, skip extraction
-3. Copy from `versions/1.25.6/` to `current/`
+2. Extract to `versions/1.25.6/`
+3. Copy from `versions/1.25.6/` to `go/`
 4. Update `local.json`
-
-### Download & Installation
-
-The download includes a real-time progress bar:
-
-```
-[============================] 120.5 MB / 150.0 MB (80.3%)
-```
-
-After download completion, SHA256 verification is performed:
-
-```
-✓ SHA256 verification passed: go1.25.6.tar.gz
-```
 
 ## System Requirements
 
@@ -205,6 +191,28 @@ After download completion, SHA256 verification is performed:
 - **Architecture**: x86_64, arm64 (depending on Go's availability)
 - **Disk Space**: ~200-300 MB per Go version
 - **Memory**: Minimal (< 50 MB for govm itself)
+
+## Project Structure
+
+```
+govm/
+├── cmd/                        # CLI entry point and command definitions
+│   ├── main.go                 # Entry point, root command
+│   ├── list.go                 # List command
+│   ├── use.go                  # Use command
+│   └── remove.go               # Remove command
+├── govm/                       # Core business logic
+│   ├── types.go                # Version, VersionFile, LocalData types
+│   ├── manager.go              # Manager: Init, Install, Uninstall, Sync
+│   └── storage.go              # Local file I/O (JSON read/write)
+├── internal/
+│   ├── archive/                # Archive extraction (tar.gz, zip)
+│   ├── download/               # File download with progress, SHA256 verification
+│   └── fsutil/                 # File system utilities (CopyDir, HomeDir, etc.)
+├── logger/                     # Structured logging (console + file)
+├── go.mod
+└── go.sum
+```
 
 ## Troubleshooting
 
@@ -234,39 +242,17 @@ govm use 1.25.6 -s https://golang.google.cn/dl/
 **Solution**: Verify your shell profile configuration:
 ```bash
 echo $GOROOT
-# Should output: /path/to/home/.govm/current
+# Should output: /home/<user>/.govm/go
 
 echo $PATH
-# Should contain: /path/to/home/.govm/current/bin
+# Should contain: /home/<user>/.govm/go/bin
 ```
-
-## Architecture
-
-- **Pure Go**: No C dependencies or shell scripts
-- **Single Binary**: Everything included in one executable
-- **Minimal Dependencies**: Only uses Go standard library and Cobra for CLI
-
-### Key Components
-
-- **VersionManager**: Manages version information and installation
-- **downloadFile()**: Downloads with progress tracking
-- **verifySha256()**: Validates checksums
-- **extractArchive()**: Extracts tar.gz and zip files
-- **copyDir()**: Recursively copies version directories
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the Apache License 2.0 License - see the LICENSE file for details.
 
 ## FAQ
 
 **Q: Can I use multiple Go versions simultaneously?**
 
-A: Yes! Each version is installed in `~/.govm/versions/{version}/`. The `current/` symlink/copy points to the active version.
+A: Yes! Each version is installed in `~/.govm/versions/{version}/`. The `go/` directory holds a copy of the active version.
 
 **Q: Will govm interfere with my system Go installation?**
 
@@ -283,6 +269,14 @@ A: Yes! govm is cross-platform and works on Windows, Linux, and macOS.
 **Q: How do I uninstall govm?**
 
 A: Simply delete the `~/.govm/` directory and remove the govm binary from your PATH.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
 
 ## Support
 

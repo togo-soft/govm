@@ -11,23 +11,18 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
-type Logger struct {
-	logger        *slog.Logger
-	defaultLogger *slog.Logger
-	fileHandler   *os.File
-}
+var _ slog.Handler = (*ConsoleHandler)(nil)
 
-var _ slog.Handler = (*ConsoleLogger)(nil)
-
-type ConsoleLogger struct {
+// ConsoleHandler formats log output with checkmark/cross indicators.
+type ConsoleHandler struct {
 	w io.Writer
 }
 
-func (c *ConsoleLogger) Enabled(ctx context.Context, level slog.Level) bool {
+func (c *ConsoleHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return level >= slog.LevelDebug
 }
 
-func (c *ConsoleLogger) Handle(ctx context.Context, record slog.Record) error {
+func (c *ConsoleHandler) Handle(ctx context.Context, record slog.Record) error {
 	var flag = "✓"
 	if record.Level > slog.LevelInfo {
 		flag = "✗"
@@ -42,55 +37,33 @@ func (c *ConsoleLogger) Handle(ctx context.Context, record slog.Record) error {
 	return nil
 }
 
-func (c *ConsoleLogger) WithAttrs(attrs []slog.Attr) slog.Handler {
+func (c *ConsoleHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return c
 }
 
-func (c *ConsoleLogger) WithGroup(name string) slog.Handler {
+func (c *ConsoleHandler) WithGroup(name string) slog.Handler {
 	return c
 }
 
-func NewLogger(wd, name string) *Logger {
-	var log = new(Logger)
-	log.defaultLogger = slog.Default()
-
-	logName := filepath.Join(wd, name)
-	handle, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+// Setup configures the global slog logger with console and file output.
+// Returns a cleanup function that closes the log file.
+func Setup(dir, name string) func() {
+	logPath := filepath.Join(dir, name)
+	handle, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
-		log.defaultLogger.Error("open log file failed, use default logger", "reason", err)
-		return log
+		slog.Error("open log file failed, using default logger", "reason", err)
+		return func() {}
 	}
-	log.fileHandler = handle
-	defaultOpts := &slog.HandlerOptions{AddSource: false, Level: slog.LevelDebug}
-	log.logger = slog.New(slogmulti.Fanout(
-		&ConsoleLogger{w: os.Stdout},
-		slog.NewTextHandler(handle, defaultOpts),
+
+	opts := &slog.HandlerOptions{AddSource: false, Level: slog.LevelDebug}
+	l := slog.New(slogmulti.Fanout(
+		&ConsoleHandler{w: os.Stdout},
+		slog.NewTextHandler(handle, opts),
 	))
 
-	slog.SetDefault(log.logger)
+	slog.SetDefault(l)
 
-	return log
-}
-
-func (log *Logger) Close() {
-	if log.fileHandler == nil {
-		return
+	return func() {
+		_ = handle.Close()
 	}
-	_ = log.fileHandler.Close()
-}
-
-func (log *Logger) Debug(msg string, args ...interface{}) {
-	slog.Debug(msg, args...)
-}
-
-func (log *Logger) Info(msg string, args ...interface{}) {
-	slog.Info(msg, args...)
-}
-
-func (log *Logger) Warn(msg string, args ...interface{}) {
-	slog.Warn(msg, args...)
-}
-
-func (log *Logger) Error(msg string, args ...interface{}) {
-	slog.Error(msg, args...)
 }
