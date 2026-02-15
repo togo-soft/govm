@@ -138,13 +138,14 @@ steps:
         EOF
 
   create-release:
-    image: codefloe.com/actions/release:v1.0.5
+    image: codefloe.com/actions/release:v1.0.9
     depends_on:
       - prepare-release
     settings:
       endpoint: https://codefloe.com
       access_token:
         from_secret: CODEFLOE_TOKEN
+      debug: true
       write_mode: append
       release_note: release/RELEASE_NOTES.md
       attachments:
