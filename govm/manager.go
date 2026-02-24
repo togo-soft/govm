@@ -45,7 +45,7 @@ func (m *Manager) Init() error {
 		return err
 	}
 
-	for _, sub := range []string{"versions", "downloads", "current"} {
+	for _, sub := range []string{"versions", "downloads", "go"} {
 		if err := os.MkdirAll(filepath.Join(m.workspace, sub), 0740); err != nil {
 			slog.Error("could not create directory", "dir", sub, "reason", err)
 			return err
@@ -200,9 +200,9 @@ func (m *Manager) Install(version, siteURL string) error {
 		return fmt.Errorf("failed to extract archive: %w", err)
 	}
 
-	currentDir := filepath.Join(m.workspace, "current")
+	currentDir := filepath.Join(m.workspace, "go")
 	if err := fsutil.CopyDir(versionDir, currentDir); err != nil {
-		return fmt.Errorf("failed to copy to .govm/current directory: %w", err)
+		return fmt.Errorf("failed to copy to .govm/go directory: %w", err)
 	}
 
 	if err := m.walkInstalledVersions(); err != nil {
@@ -254,7 +254,7 @@ func (m *Manager) Uninstall(version string) error {
 	// If removing current version, clear it
 	if m.Data.CurrentVersion == version {
 		m.Data.CurrentVersion = ""
-		currentDir := filepath.Join(m.workspace, "current")
+		currentDir := filepath.Join(m.workspace, "go")
 		os.RemoveAll(currentDir)
 		os.MkdirAll(currentDir, 0755)
 	}

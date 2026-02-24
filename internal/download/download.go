@@ -109,15 +109,14 @@ func VerifySHA256(filePath, expectedSum string) error {
 	filename := filepath.Base(filePath)
 
 	if actual == expectedSum {
-		fmt.Printf("✓ SHA256 verification passed: %s\n", filename)
-		slog.Info("sha256 verification passed", "file", filename)
+		slog.Info("SHA256 verification passed", "file", filename)
 		return nil
 	}
 
 	fmt.Printf("✗ SHA256 verification FAILED: %s\n", filename)
 	fmt.Printf("  Expected: %s\n", expectedSum)
 	fmt.Printf("  Got:      %s\n", actual)
-	slog.Error("sha256 verification failed", "file", filename, "expected", expectedSum, "actual", actual)
+	slog.Error("SHA256 verification failed", "file", filename, "expected", expectedSum, "actual", actual)
 
-	return fmt.Errorf("sha256 mismatch: expected %s, got %s", expectedSum, actual)
+	return fmt.Errorf("SHA256 mismatch: expected %s, got %s", expectedSum, actual)
 }
