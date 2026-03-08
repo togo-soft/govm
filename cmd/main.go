@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"os"
 
-	"codefloe.com/apps/govm/govm"
-	"codefloe.com/apps/govm/internal/fsutil"
-	"codefloe.com/apps/govm/logger"
+	"codeberg.org/application/govm/govm"
+	"codeberg.org/application/govm/internal/fsutil"
+	"codeberg.org/application/govm/logger"
 	"github.com/spf13/cobra"
 )
 

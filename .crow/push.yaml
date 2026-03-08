@@ -1,0 +1,88 @@
+variables:
+  platforms: &platforms
+    - name: codeberg
+      enabled: true
+      owner: application
+      repository: govm
+      url: ssh://git@codeberg.org/application/govm.git
+      ssh_key:
+        from_secret: ssh_key
+      remote_name: codeberg
+      is_organization: true
+      token:
+        from_secret: codeberg_token
+      auto_create: true
+      is_private: false
+      platform_type: gitea
+      endpoint: https://codeberg.org
+    - name: github
+      enabled: true
+      owner: togo-soft
+      repository: govm
+      url: git@github.com:togo-soft/govm.git
+      ssh_key:
+        from_secret: ssh_key
+      remote_name: github
+      token:
+        from_secret: github_token
+      auto_create: true
+      is_private: false
+      is_organization: true
+      platform_type: github
+    - name: cnb
+      enabled: true
+      owner: codedataset
+      repository: govm
+      url: https://cnb.cool/codedataset/govm
+      remote_name: cnb
+      username: cnb
+      token:
+        from_secret: cnb_token
+      auto_create: true
+      is_private: false
+      is_organization: true
+      platform_type: cnb
+    - name: gitee
+      enabled: true
+      owner: codedataset
+      repository: govm
+      url: https://gitee.com/codedataset/govm.git
+      remote_name: gitee
+      username: xuthus5
+      password:
+        from_secret: gitee_password
+      token:
+        from_secret: gitee_token
+      auto_create: true
+      is_private: false
+      is_organization: true
+      platform_type: gitee
+    - name: bitbucket
+      enabled: true
+      owner: xuthus5
+      repository: govm
+      url: git@bitbucket.org:xuthus5/govm.git
+      remote_name: bitbucket
+      ssh_key:
+        from_secret: ssh_key
+      username: xuthus5@gmail.com
+      token:
+        from_secret: bitbucket_token
+      auto_create: true
+      is_private: false
+      platform_type: bitbucket
+
+when:
+  - event: [ push, pull_request, tag ]
+
+clone:
+  git:
+    image: codeberg.org/crow-plugins/clone:1.0.3
+    settings:
+      tags: true
+
+steps:
+  push:
+    image: codefloe.com/actions/push:v1.0.3
+    settings:
+      PLATFORMS: *platforms

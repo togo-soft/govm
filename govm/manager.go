@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"codefloe.com/apps/govm/internal/archive"
-	"codefloe.com/apps/govm/internal/download"
-	"codefloe.com/apps/govm/internal/fsutil"
+	"codeberg.org/application/govm/internal/archive"
+	"codeberg.org/application/govm/internal/download"
+	"codeberg.org/application/govm/internal/fsutil"
 )
 
 type Manager struct {

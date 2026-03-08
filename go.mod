@@ -1,4 +1,4 @@
-module codefloe.com/apps/govm
+module codeberg.org/application/govm
 
 go 1.24.0
 

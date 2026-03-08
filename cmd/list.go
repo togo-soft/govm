@@ -1,7 +1,7 @@
 package main
 
 import (
-	"codefloe.com/apps/govm/govm"
+	"codeberg.org/application/govm/govm"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"

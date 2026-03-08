@@ -20,12 +20,12 @@ A lightweight, cross-platform Go version manager written in pure Go. Easily inst
 
 ### Download Binary
 
-Download the latest release from [codefloe Releases](https://codefloe.com/apps/govm/releases) and add it to your PATH.
+Download the latest release from [codeberg Releases](https://codeberg.org/application/govm/releases) and add it to your PATH.
 
 ### Build from Source
 
 ```bash
-git clone https://codefloe.com/apps/govm.git
+git clone https://codeberg.org/application/govm.git
 cd govm
 go build -o govm ./cmd
 ```
@@ -280,4 +280,4 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 
 ## Support
 
-For issues and feature requests, please visit the [codefloe Issues](https://codefloe.com/apps/govm/issues) page.
+For issues and feature requests, please visit the [codefloe Issues](https://codeberg.org/application/govm/issues) page.
